@@ -1,0 +1,62 @@
+from uuid import UUID
+
+import wtforms_json
+from flask import Flask
+
+from backend.config import DevelopmentConfig
+from backend.ext import cors, db, pagination, bcrypt, migrate, rq, ma, mail, jwt
+from backend.models import User
+from backend.resources import api, bapi
+from backend.resources.kyc import KYCResourceList, KYCResource, ClientKYCResource, KycUploadResource
+from backend.resources.tag import TagResource, TagResourceList, UserTagResource
+from backend.resources.team import TeamResource, TeamResourceList
+from backend.resources.users import UserResource, UserResourceList
+from backend.security.confirm_account import ConfirmAccountResource
+from backend.security.forgot_password import ForgotPasswordResource
+from backend.security.login import LoginResource
+from backend.security.register import RegisterResource
+from backend.security.resend_account_activation import ResendAccountActivationResource
+from backend.security.reset_password import ResetPasswordResource
+
+
+def create_app():
+    app = Flask(__name__)
+    app.config.from_object(DevelopmentConfig)
+    jwt.init_app(app)
+    cors.init_app(app, resources={r"/api/*": {"origins": "*"}})
+    db.init_app(app)
+    pagination.init_app(app, db)
+    bcrypt.init_app(app)
+    migrate.init_app(app, db)
+    rq.init_app(app)
+    ma.init_app(app)
+    mail.init_app(app)
+    wtforms_json.init()
+    app.register_blueprint(bapi)
+    api.add_resource(UserResourceList, '/users', endpoint='users')
+    api.add_resource(UserResource, '/user/<int:pk>', endpoint='user')
+    api.add_resource(LoginResource, '/login', endpoint='login')
+    api.add_resource(ForgotPasswordResource, '/forgot', endpoint='forgot')
+    api.add_resource(ConfirmAccountResource, '/confirm', endpoint='confirm')
+    api.add_resource(RegisterResource, '/register', endpoint='register')
+    api.add_resource(ResendAccountActivationResource, '/re-confirm', endpoint='re_confirm')
+    api.add_resource(ResetPasswordResource, '/reset-pwd', endpoint='reset_pwd')
+
+    api.add_resource(KYCResourceList, 'kycs', endpoint='kycs')
+    api.add_resource(KYCResource, 'kyc/<int:pk>', endpoint='kyc')
+    api.add_resource(ClientKYCResource, '/client/kyc', endpoint='client_kyc')
+    api.add_resource(KycUploadResource, '/client/kyc/file', endpoint='client_kyc_file')
+
+    api.add_resource(TeamResource, '/team/<int:pk>', endpoint='team')
+    api.add_resource(TeamResourceList, '/teams', endpoint='teams')
+
+    api.add_resource(TagResource, '/tag/<int:pk>', endpoint='tag')
+    api.add_resource(TagResourceList, '/tags', endpoint='tags')
+
+    api.add_resource(UserTagResource, '/user/tag', endpoint='user_tag')
+
+    @jwt.user_loader_callback_loader
+    def load_user(identity):
+        return User.query.filter(User.uuid == UUID(identity)).one()
+
+    return app
