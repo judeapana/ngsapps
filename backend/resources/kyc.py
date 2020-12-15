@@ -21,7 +21,7 @@ parser.add_argument('country', required=True, location='json', type=str)
 
 schema = KYCSchema()
 
-mschema = {
+mschema = api.model('KYC', {
     'user': fields.Nested(user_schema),
     'business_name': fields.String(),
     'ident': fields.String(),
@@ -30,7 +30,7 @@ mschema = {
     'country': fields.String(),
     'file': fields.String(),
     'status': fields.String(),
-}
+})
 
 
 class KYCResourceList(Resource):
@@ -51,7 +51,7 @@ class KYCResource(Resource):
         obj = Kyc.query.get_or_404(pk)
         return obj
 
-    @api.marshal_with(mschema)
+    # @api.marshal_with(mschema)
     def put(self, pk):
         put_parser = RequestParser()
         put_parser.add_argument('status', required=True, location='json', type=str,

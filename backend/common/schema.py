@@ -1,7 +1,7 @@
 from marshmallow_sqlalchemy import fields
 
 from backend import User, ma
-from backend.models import Kyc, Team, Tag
+from backend.models import Kyc, Team, Tag, Project, ProjectFile, ProjectComment, Task
 
 
 class TagSchema(ma.SQLAlchemyAutoSchema):
@@ -33,3 +33,32 @@ class TeamSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
 
     users = fields.Nested(UserSchema(), many=True)
+
+
+class ProjectSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Project
+        load_instance = True
+
+    user = fields.Nested(UserSchema())
+
+
+class ProjectFileSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = ProjectFile
+        load_instance = True
+
+
+class ProjectCommentSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = ProjectComment
+        load_instance = True
+
+
+class TaskSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Task
+        load_instance = True
+
+    user = fields.Nested(UserSchema())
+    project = fields.Nested(ProjectSchema())

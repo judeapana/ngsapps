@@ -1,4 +1,5 @@
 import secrets
+from datetime import datetime
 from uuid import uuid4
 
 from flask import current_app
@@ -115,10 +116,11 @@ class Tag(db.Model, ActiveRecord):
 
 class Project(db.Model, ActiveRecord):
     id = db.Column(db.Integer, primary_key=True, nullable=False, unique=True)
+    uuid = db.Column(UUIDType, default=uuid4(), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='cascade'), nullable=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=False)
-    start_date = db.Column(db.Date, nullable=False)
+    start_date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
     due_date = db.Column(db.Date, nullable=False)
     budget = db.Column(db.Numeric(10, 2, asdecimal=False), nullable=False)
     priority = db.Column(db.Enum('High', 'Low', 'Normal'), nullable=False, default='Low')
@@ -151,6 +153,7 @@ class ProjectComment(db.Model, ActiveRecord):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='cascade'), nullable=False)
     project_id = db.Column(db.Integer, db.ForeignKey('project.id', ondelete='cascade'), nullable=False)
     message = db.Column(db.Text, nullable=False)
+    hide = db.Column(db.Boolean, default=False)
     file = db.Column(db.String(200))
 
 
@@ -197,12 +200,12 @@ class TicketComment(db.Model, ActiveRecord):
 class Task(db.Model, ActiveRecord):
     id = db.Column(db.Integer, primary_key=True, nullable=False, unique=True)
     name = db.Column(db.String(100), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='cascade'), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='cascade'), nullable=False)
     project_id = db.Column(db.Integer, db.ForeignKey('project.id', ondelete='cascade'), nullable=False)
     description = db.Column(db.Text, nullable=False)
     date = db.Column(db.Date, nullable=False)
     due_date = db.Column(db.Date, nullable=False)
-    status = db.Column(db.Enum('Ongoing', 'Complete', 'Upcoming'), nullable=False)
+    status = db.Column(db.Enum('Ongoing', 'Complete', 'Upcoming'), nullable=False, default='Ongoing')
     # team_members = db.relationship('Team', backref=db.backref('task'), secondary='task_team_member',
     #                                cascade='all,delete',
     #                                lazy='dynamic')

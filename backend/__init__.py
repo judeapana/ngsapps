@@ -8,12 +8,18 @@ from backend.ext import cors, db, pagination, bcrypt, migrate, rq, ma, mail, jwt
 from backend.models import User
 from backend.resources import api, bapi
 from backend.resources.kyc import KYCResourceList, KYCResource, ClientKYCResource, KycUploadResource
+from backend.resources.project import ProjectResource, ProjectResourceList
+from backend.resources.project_comment import ProjectCommentResourceList, ProjectCommentResource, \
+    ProjectCommentResourceFile
+from backend.resources.project_files import ProjectFileResourceList, ProjectFileResource
 from backend.resources.tag import TagResource, TagResourceList, UserTagResource
+from backend.resources.task import TaskResourceList, TaskResource
 from backend.resources.team import TeamResource, TeamResourceList
 from backend.resources.users import UserResource, UserResourceList
 from backend.security.confirm_account import ConfirmAccountResource
 from backend.security.forgot_password import ForgotPasswordResource
 from backend.security.login import LoginResource
+from backend.security.protected import ProtectedDirResource
 from backend.security.register import RegisterResource
 from backend.security.resend_account_activation import ResendAccountActivationResource
 from backend.security.reset_password import ResetPasswordResource
@@ -54,6 +60,22 @@ def create_app():
     api.add_resource(TagResourceList, '/tags', endpoint='tags')
 
     api.add_resource(UserTagResource, '/user/tag', endpoint='user_tag')
+
+    api.add_resource(ProjectResource, '/project/<int:pk>', endpoint='project')
+    api.add_resource(ProjectResourceList, '/projects', endpoint='projects')
+
+    api.add_resource(ProjectFileResource, '/project/<uuid>/<int:pk>', endpoint='project_file')
+    api.add_resource(ProjectFileResourceList, '/project/<uuid>', endpoint='projects_files')
+
+    api.add_resource(ProjectCommentResource, '/project/comment/<uuid>/<int:pk>', endpoint='projects_comment')
+    api.add_resource(ProjectCommentResourceFile, '/project/comment/file/<uuid>/<int:pk>',
+                     endpoint='projects_comment_file')
+    api.add_resource(ProjectCommentResourceList, '/project/comments/<uuid>', endpoint='projects_comments')
+
+    api.add_resource(TaskResource, '/task/<int:pk>', endpoint='task')
+    api.add_resource(TaskResourceList, '/tasks', endpoint='tasks')
+
+    api.add_resource(ProtectedDirResource, '/files/<filename>', endpoint='protected_dir')
 
     @jwt.user_loader_callback_loader
     def load_user(identity):

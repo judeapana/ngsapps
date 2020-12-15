@@ -8,6 +8,7 @@ class ActiveRecord:
         try:
             db.session.add(self)
             db.session.commit()
+            # kwargs.update({'id': self.id})
             return {'data': kwargs}
         except IntegrityError as e:
             print(e)
