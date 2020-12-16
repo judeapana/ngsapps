@@ -41,4 +41,6 @@ class ProtectedDirField(Raw):
     """
 
     def format(self, value):
+        if not value:
+            return ''
         return url_for('api.protected_dir', filename=value, _external=True)

@@ -1,4 +1,3 @@
-import secrets
 from datetime import datetime
 from uuid import uuid4
 
@@ -42,6 +41,8 @@ class User(db.Model, ActiveRecord, Timestamp):
                               uselist=True, lazy=True)
     tasks = db.relationship('Task', backref=db.backref('user'), cascade='all,delete,delete-orphan',
                             lazy='dynamic')
+    ticket_comments = db.relationship('TicketComment', backref=db.backref('user'), cascade='all,delete,delete-orphan',
+                                      lazy='dynamic')
 
     def set_password(self, password):
         self.password = bcrypt.generate_password_hash(password)
@@ -171,7 +172,7 @@ class ProjectTeam(db.Model, ActiveRecord):
 
 class Ticket(db.Model, ActiveRecord):
     id = db.Column(db.Integer, primary_key=True, nullable=False, unique=True)
-    uuid = db.Column(db.String(100), default=secrets.token_hex(10), nullable=False)
+    uuid = db.Column(UUIDType, default=uuid4(), nullable=False)
     title = db.Column(db.String(100), nullable=False)
     project_id = db.Column(db.Integer, db.ForeignKey('project.id', ondelete='cascade'), nullable=False)
     status = db.Column(db.Enum('Achieve', 'Open', 'Closed'))
@@ -182,7 +183,7 @@ class Ticket(db.Model, ActiveRecord):
 class TicketComment(db.Model, ActiveRecord):
     id = db.Column(db.Integer, primary_key=True, nullable=False, unique=True)
     ticket_id = db.Column(db.Integer, db.ForeignKey('ticket.id', ondelete='cascade'), nullable=False)
-    admin_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='cascade'), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='cascade'), nullable=False)
     message = db.Column(db.Text, nullable=False)
     file = db.Column(db.String(200))
 
@@ -203,8 +204,8 @@ class Task(db.Model, ActiveRecord):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='cascade'), nullable=False)
     project_id = db.Column(db.Integer, db.ForeignKey('project.id', ondelete='cascade'), nullable=False)
     description = db.Column(db.Text, nullable=False)
-    date = db.Column(db.Date, nullable=False)
-    due_date = db.Column(db.Date, nullable=False)
+    date = db.Column(db.DateTime, nullable=False)
+    due_date = db.Column(db.DateTime, nullable=False)
     status = db.Column(db.Enum('Ongoing', 'Complete', 'Upcoming'), nullable=False, default='Ongoing')
     # team_members = db.relationship('Team', backref=db.backref('task'), secondary='task_team_member',
     #                                cascade='all,delete',
@@ -224,7 +225,7 @@ class Notification(db.Model, ActiveRecord):
     message = db.Column(db.Text, nullable=False)
     status = db.Column(db.Boolean, default=False, nullable=False)
     priority = db.Column(db.Enum('High', 'Low', 'Normal'))
-    schedule_at = db.Column(db.Date)
+    schedule_at = db.Column(db.DateTime)
 
 
 class RqJob(db.Model, ActiveRecord):

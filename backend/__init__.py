@@ -8,6 +8,7 @@ from backend.ext import cors, db, pagination, bcrypt, migrate, rq, ma, mail, jwt
 from backend.models import User
 from backend.resources import api, bapi
 from backend.resources.kyc import KYCResourceList, KYCResource, ClientKYCResource, KycUploadResource
+from backend.resources.notification import NotificationResourceList, NotificationResource
 from backend.resources.project import ProjectResource, ProjectResourceList
 from backend.resources.project_comment import ProjectCommentResourceList, ProjectCommentResource, \
     ProjectCommentResourceFile
@@ -15,6 +16,8 @@ from backend.resources.project_files import ProjectFileResourceList, ProjectFile
 from backend.resources.tag import TagResource, TagResourceList, UserTagResource
 from backend.resources.task import TaskResourceList, TaskResource
 from backend.resources.team import TeamResource, TeamResourceList
+from backend.resources.ticket import TicketResource, TicketResourceList
+from backend.resources.ticket_comment import TicketCommentResource, TicketCommentResourceList, TicketCommentResourceFile
 from backend.resources.users import UserResource, UserResourceList
 from backend.security.confirm_account import ConfirmAccountResource
 from backend.security.forgot_password import ForgotPasswordResource
@@ -74,6 +77,16 @@ def create_app():
 
     api.add_resource(TaskResource, '/task/<int:pk>', endpoint='task')
     api.add_resource(TaskResourceList, '/tasks', endpoint='tasks')
+
+    api.add_resource(NotificationResource, '/notification/<int:pk>', endpoint='notification')
+    api.add_resource(NotificationResourceList, '/notifications', endpoint='notifications')
+
+    api.add_resource(TicketResource, '/ticket/<int:pk>', endpoint='ticket')
+    api.add_resource(TicketResourceList, '/tickets', endpoint='tickets')
+
+    api.add_resource(TicketCommentResource, '/ticket/comment/<uuid>/<pk>', endpoint='ticket_comment')
+    api.add_resource(TicketCommentResourceList, '/ticket/comments/<uuid>', endpoint='ticket_comments')
+    api.add_resource(TicketCommentResourceFile, '/ticket/comment/file/<uuid>/<int:pk>', endpoint='ticket_comment_file')
 
     api.add_resource(ProtectedDirResource, '/files/<filename>', endpoint='protected_dir')
 

@@ -1,7 +1,8 @@
 from marshmallow_sqlalchemy import fields
 
 from backend import User, ma
-from backend.models import Kyc, Team, Tag, Project, ProjectFile, ProjectComment, Task
+from backend.models import Kyc, Team, Tag, Project, ProjectFile, ProjectComment, Task, Ticket, TicketComment, \
+    Notification
 
 
 class TagSchema(ma.SQLAlchemyAutoSchema):
@@ -62,3 +63,25 @@ class TaskSchema(ma.SQLAlchemyAutoSchema):
 
     user = fields.Nested(UserSchema())
     project = fields.Nested(ProjectSchema())
+
+
+class TicketSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Ticket
+        load_instance = True
+
+    comments = fields.Nested('TicketCommentSchema', many=True)
+
+
+class TicketCommentSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = TicketComment
+        load_instance = True
+
+
+class NotificationSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Notification
+        load_instance = True
+
+    user = fields.Nested(UserSchema())

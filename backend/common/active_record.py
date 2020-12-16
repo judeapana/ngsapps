@@ -1,3 +1,4 @@
+from flask_restful import abort
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from backend.ext import db
@@ -13,7 +14,9 @@ class ActiveRecord:
         except IntegrityError as e:
             print(e)
             db.session.rollback()
-            return {'msg': 'Something bad happened'}, 500
+            return abort(500, )
+
+            # return {'msg': 'Something bad happened'}, 500
 
     def delete(self, **kwargs):
         try:
@@ -21,4 +24,4 @@ class ActiveRecord:
             db.session.commit()
         except SQLAlchemyError as e:
             db.session.rollback()
-            return {'msg': 'Something bad happened'}, 500
+            return abort(500, )
