@@ -4,7 +4,7 @@ from flask_jwt_extended import jwt_required, current_user
 from flask_restplus import fields, Resource, Namespace
 from flask_restplus.reqparse import RequestParser
 
-from backend import db, pagination
+from backend.ext import db, pagination
 from backend.common import ProtectedDirField
 from backend.common.schema import TicketCommentSchema
 from backend.models import TicketComment, Ticket

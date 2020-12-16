@@ -4,7 +4,7 @@ from flask_jwt_extended import current_user, jwt_required
 from flask_restplus import Resource, fields, abort, Namespace
 from flask_restplus.reqparse import RequestParser
 
-from backend import pagination, db
+from backend.ext import pagination, db
 from backend.common import phone_number
 from backend.common.schema import KYCSchema
 from backend.models import Kyc

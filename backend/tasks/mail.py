@@ -1,13 +1,22 @@
-from flask_mail import Message
+from backend.ext import rq
 
-from backend import rq, mail
+
+@rq.job()
+# email, message, subject=''
+def send_mail_rq():
+    pass
+
+    # try:
+    # msg = Message()
+    # msg.recipients = [email]
+    # msg.subject = subject
+    # msg.body = message
+    # mail.send(msg)
+    # except Exception as e:
+    #     return e
 
 
 @rq.job
-def send_mail_rq(email, message, subject=''):
-    try:
-        msg = Message(subject=subject, recipients=[email])
-        msg.html = message
-        mail.send(msg)
-    except Exception as e:
-        return e
+def rq_login_notify(email):
+    pass
+    # send_mail_rq(email, LOGIN_NOTIFY.format())

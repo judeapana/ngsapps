@@ -6,6 +6,7 @@ from flask_restplus.reqparse import RequestParser
 
 from backend.models import User
 from backend.security import auth
+from backend.tasks.mail import rq_login_notify
 
 
 @auth.route('/')
@@ -25,5 +26,6 @@ class Login(Resource):
                 if not user.status:
                     return jsonify({'message': 'Your account is currently inactive'}), 401
                 else:
+                    rq_login_notify.queue(user.email)
                     access_token = create_access_token(identity=str(user.uuid))
                     return {'access_token': access_token}, 200

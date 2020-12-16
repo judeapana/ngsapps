@@ -2,7 +2,7 @@ from flask import request
 from flask_restplus import Resource, fields, inputs, Namespace
 from flask_restplus.reqparse import RequestParser
 
-from backend import pagination, db
+from backend.ext import pagination, db
 from backend.common.schema import NotificationSchema
 from backend.models import Notification
 from backend.resources.users import user_schema

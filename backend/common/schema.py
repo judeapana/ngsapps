@@ -1,8 +1,8 @@
 from marshmallow_sqlalchemy import fields
 
-from backend import User, ma
+from backend.ext import ma
 from backend.models import Kyc, Team, Tag, Project, ProjectFile, ProjectComment, Task, Ticket, TicketComment, \
-    Notification
+    Notification, User
 
 
 class TagSchema(ma.SQLAlchemyAutoSchema):

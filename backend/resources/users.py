@@ -5,9 +5,9 @@ from flask_jwt_extended import jwt_required
 from flask_restplus import Resource, fields, inputs, Namespace
 from flask_restplus.reqparse import RequestParser
 
-from backend import pagination, db
 from backend.common import string
 from backend.common.schema import UserSchema
+from backend.ext import pagination, db
 from backend.models import User
 
 ns_user = Namespace('user', 'User management users/admin/client/team members')

@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required, current_user
 from flask_restplus import Resource, fields, inputs, Namespace
 from flask_restplus.reqparse import RequestParser
 
-from backend import pagination, db
+from backend.ext import pagination, db
 from backend.common.schema import ProjectSchema
 from backend.models import Project, Team
 from backend.resources.users import user_schema
