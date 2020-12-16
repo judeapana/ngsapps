@@ -1,15 +1,17 @@
 import werkzeug
 from flask_jwt_extended import current_user, jwt_required
-from flask_restplus import Resource, fields
+from flask_restplus import Resource, fields, Namespace
 from flask_restplus.reqparse import RequestParser
 
-from backend import api, pagination
+from backend import pagination
 from backend.common import ProtectedDirField
 from backend.models import Project, ProjectFile
 from backend.resources.project import project_schema
 from backend.utils import delete_file, file_upload
 
-project_files_schema = api.model('ProjectFiles', {
+ns_proj_files = Namespace('project-files', 'Project files upload')
+
+project_files_schema = ns_proj_files.model('ProjectFiles', {
     'id': fields.Integer(),
     'project': fields.Nested(project_schema),
     'attached_file': ProtectedDirField(),
@@ -20,7 +22,7 @@ project_files_schema = api.model('ProjectFiles', {
 class ProjectFileResource(Resource):
     method_decorators = [jwt_required]
 
-    @api.marshal_with(project_files_schema, envelope='data')
+    @ns_proj_files.marshal_with(project_files_schema, envelope='data')
     def get(self, uuid, pk):
         if current_user.role == 'CLIENT':
             project = current_user.projects.filter_by(uuid=uuid).first_or_404()
@@ -67,3 +69,7 @@ class ProjectFileResourceList(Resource):
             data.get('upload').save(data.get('full_path'))
             project.files.append(ProjectFile(attached_file=data.get('filename'), description=args.description))
         return project.save(), 202
+
+
+ns_proj_files.add_resource(ProjectFileResource, '/<uuid>/<int:pk>', endpoint='project_file')
+ns_proj_files.add_resource(ProjectFileResourceList, '/<uuid>', endpoint='projects_files')

@@ -1,17 +1,18 @@
 from flask import request
 from flask_jwt_extended import jwt_required
-from flask_restplus import Resource, fields, inputs
+from flask_restplus import Resource, fields, inputs, Namespace
 from flask_restplus.reqparse import RequestParser
 
-from backend import pagination, api, db
+from backend import pagination, db
 from backend.common import string
 from backend.common.schema import TeamSchema
 from backend.models import Team, User, TeamMember
 from backend.resources.users import user_schema
 
-schema = TeamSchema()
+ns_team = Namespace('team', 'Build teams to handle projects')
 
-mschema = api.model('Team', {
+schema = TeamSchema()
+mschema = ns_team.model('Team', {
     'id': fields.Integer(),
     'name': fields.String(),
     'email_address': fields.String(),
@@ -29,7 +30,7 @@ parser.add_argument('description', required=True, location='json', type=string, 
 class TeamResource(Resource):
     method_decorators = [jwt_required]
 
-    @api.marshal_with(mschema, envelope='data')
+    @ns_team.marshal_with(mschema, envelope='data')
     def get(self, pk):
         return Team.query.get(pk)
 
@@ -80,3 +81,7 @@ class TeamResourceList(Resource):
         request.json.pop('members')
         obj = schema.load(data=request.json, unknown='exclude', instance=team, session=db.session)
         return obj.save(**args)
+
+
+ns_team.add_resource(TeamResource, '/<int:pk>', endpoint='team')
+ns_team.add_resource(TeamResourceList, '/', endpoint='teams')

@@ -5,9 +5,11 @@ from flask_restplus import Resource
 from flask_restplus.reqparse import RequestParser
 
 from backend.models import User
+from backend.security import auth
 
 
-class LoginResource(Resource):
+@auth.route('/')
+class Login(Resource):
     def post(self):
         parser = RequestParser(bundle_errors=True)
         parser.add_argument('username', type=str, required=True, location='json', help='username is required')

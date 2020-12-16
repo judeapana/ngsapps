@@ -1,15 +1,16 @@
 from flask import request
-from flask_restplus import Resource, fields
+from flask_restplus import Resource, fields, Namespace
 from flask_restplus.reqparse import RequestParser
 
-from backend import pagination, api, db
+from backend import pagination, db
 from backend.common.schema import TicketSchema
 from backend.models import Ticket
 from backend.resources.project import project_schema
 from backend.resources.ticket_comment import ticket_comment_schema
 
+ns_ticket = Namespace('ticket', 'Support tickets for clients')
 schema = TicketSchema()
-ticket_schema = api.model('Ticket', {
+ticket_schema = ns_ticket.model('Ticket', {
     'id': fields.Integer(),
     'uuid': fields.String(),
     'title': fields.String(),
@@ -46,3 +47,7 @@ class TicketResourceList(Resource):
         args = parser.parse_args(strict=True)
         ticket = Ticket(**args)
         return ticket.save(**args), 201
+
+
+ns_ticket.add_resource(TicketResource, '/<int:pk>', endpoint='ticket')
+ns_ticket.add_resource(TicketResourceList, '/', endpoint='tickets')

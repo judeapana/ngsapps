@@ -1,17 +1,19 @@
 import werkzeug
 from flask import request
 from flask_jwt_extended import jwt_required, current_user
-from flask_restplus import fields, Resource
+from flask_restplus import fields, Resource, Namespace
 from flask_restplus.reqparse import RequestParser
 
-from backend import api, db, pagination
+from backend import db, pagination
 from backend.common import ProtectedDirField
 from backend.common.schema import TicketCommentSchema
 from backend.models import TicketComment, Ticket
 from backend.resources.users import user_schema
 from backend.utils import file_upload, delete_file
 
-ticket_comment_schema = api.model('TicketComment', {
+ns_ticket_comments = Namespace('ticket-comment', 'support tickets clients')
+
+ticket_comment_schema = ns_ticket_comments.model('TicketComment', {
     'id': fields.Integer(),
     'ticket_id': fields.String(),
     'user': fields.Nested(user_schema, skip_none=True),
@@ -27,7 +29,7 @@ schema = TicketCommentSchema()
 class TicketCommentResource(Resource):
     method_decorators = [jwt_required]
 
-    @api.marshal_with(ticket_comment_schema)
+    @ns_ticket_comments.marshal_with(ticket_comment_schema)
     def get(self, uuid, pk):
         return TicketComment.query.filter(TicketComment.id == pk,
                                           TicketComment.ticket.has(uuid=uuid)).first_or_404()
@@ -87,3 +89,9 @@ class TicketCommentResourceFile(Resource):
                                              TicketComment.id == pk,
                                              TicketComment.user_id == current_user.id).first_or_404()
         return delete_file(comment.file)
+
+
+ns_ticket_comments.add_resource(TicketCommentResource, '/comment/<uuid>/<pk>', endpoint='ticket_comment')
+ns_ticket_comments.add_resource(TicketCommentResourceList, '/comments/<uuid>', endpoint='ticket_comments')
+ns_ticket_comments.add_resource(TicketCommentResourceFile, '/comment/file/<uuid>/<int:pk>',
+                                endpoint='ticket_comment_file')

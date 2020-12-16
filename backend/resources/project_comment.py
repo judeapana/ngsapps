@@ -1,10 +1,10 @@
 import werkzeug
 from flask import request
 from flask_jwt_extended import current_user, jwt_required
-from flask_restplus import Resource, fields, inputs
+from flask_restplus import Resource, fields, inputs, Namespace
 from flask_restplus.reqparse import RequestParser
 
-from backend import api, pagination, db
+from backend import pagination, db
 from backend.common import ProtectedDirField
 from backend.common.schema import ProjectCommentSchema
 from backend.models import ProjectComment, Project
@@ -12,7 +12,8 @@ from backend.resources.project import project_schema
 from backend.resources.users import user_schema
 from backend.utils import file_upload, delete_file
 
-project_comment_schema = api.model('Comments', {
+ns_proj_comment = Namespace('project-comments', 'Project comments by users')
+project_comment_schema = ns_proj_comment.model('Comments', {
     'id': fields.Integer(),
     'user': fields.Nested(user_schema),
     'project': fields.Nested(project_schema),
@@ -30,7 +31,7 @@ parser.add_argument('message', required=True, type=str, location='json')
 class ProjectCommentResource(Resource):
     method_decorators = [jwt_required]
 
-    @api.marshal_with(project_comment_schema)
+    @ns_proj_comment.marshal_with(project_comment_schema)
     def get(self, uuid, pk):
         return ProjectComment.query.filter(ProjectComment.id == pk,
                                            ProjectComment.project.has(uuid=uuid)).first_or_404()
@@ -85,3 +86,9 @@ class ProjectCommentResourceFile(Resource):
         comment = current_user.project_comments.filter(ProjectComment.id == pk,
                                                        ProjectComment.project.has(uuid=uuid)).first_or_404()
         return delete_file(comment.file)
+
+
+ns_proj_comment.add_resource(ProjectCommentResource, '/comment/<uuid>/<int:pk>', endpoint='projects_comment')
+ns_proj_comment.add_resource(ProjectCommentResourceFile, '/comment/file/<uuid>/<int:pk>',
+                             endpoint='projects_comment_file')
+ns_proj_comment.add_resource(ProjectCommentResourceList, '/comments/<uuid>', endpoint='projects_comments')

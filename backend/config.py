@@ -14,11 +14,12 @@ class Config:
     MAIL_USERNAME = 'password@evoting.portalsgh.com'
     MAIL_PASSWORD = 'apana1jude1'
     MAIL_DEFAULT_SENDER = 'Evoting.portalghs@portalghs.com'
-    JWT_ACCESS_TOKEN_EXPIRES  = timedelta(days=5)
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=5)
     PAGINATE_PAGE_SIZE = 10
     PAGINATE_RESOURCE_LINKS_ENABLED = True
     JWT_AUTH_URL_RULE = '/api/auth'
     JWT_SECRET_KEY = 'a9a3c143b9dac091f39ce0d89ba0607ad31a64249582ec0ba'
+    SERVER_NAME = '127.0.0.1:5000'
 
 
 class DevelopmentConfig(Config):

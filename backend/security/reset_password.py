@@ -8,30 +8,32 @@ from flask_restplus import inputs
 from werkzeug.security import safe_str_cmp
 
 from backend.models import User
+from backend.security import auth
 
 
-class ResetPasswordResource(Resource):
+@auth.route('/reset-pwd')
+class ResetPassword(Resource):
     parser = RequestParser(bundle_errors=True)
 
     def get(self):
-        ResetPasswordResource.parser.add_argument('token', type=str, required=True, location='args',
-                                                  help='Token is missing')
-        args = ResetPasswordResource.parser.parse_args(strict=True)
+        ResetPassword.parser.add_argument('token', type=str, required=True, location='args',
+                                          help='Token is missing')
+        args = ResetPassword.parser.parse_args(strict=True)
         token = User.authenticate_token(args.token)
         if not token:
             return jsonify(message='Token is invalid or has expired', other='Please regenerate token')
         return jsonify(message='Token is valid')
 
     def put(self):
-        ResetPasswordResource.parser.add_argument('token', type=str, required=True, location='args',
-                                                  help='Token is missing')
-        ResetPasswordResource.parser.add_argument('new_pwd', type=inputs.regex('[A-Za-z0-9@#$%^&+=]{8,}'),
-                                                  required=True, location='json',
-                                                  help='Password must have a minimum of eight characters.')
-        ResetPasswordResource.parser.add_argument('confirm_pwd', type=inputs.regex('[A-Za-z0-9@#$%^&+=]{8,}'),
-                                                  required=True, location='json',
-                                                  help='Password must have a minimum of eight characters.')
-        args = ResetPasswordResource.parser.parse_args(strict=True)
+        ResetPassword.parser.add_argument('token', type=str, required=True, location='args',
+                                          help='Token is missing')
+        ResetPassword.parser.add_argument('new_pwd', type=inputs.regex('[A-Za-z0-9@#$%^&+=]{8,}'),
+                                          required=True, location='json',
+                                          help='Password must have a minimum of eight characters.')
+        ResetPassword.parser.add_argument('confirm_pwd', type=inputs.regex('[A-Za-z0-9@#$%^&+=]{8,}'),
+                                          required=True, location='json',
+                                          help='Password must have a minimum of eight characters.')
+        args = ResetPassword.parser.parse_args(strict=True)
 
         token = User.authenticate_token(args.token)
         print(token)

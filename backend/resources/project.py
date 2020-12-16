@@ -1,14 +1,16 @@
 from flask import request
 from flask_jwt_extended import jwt_required, current_user
-from flask_restplus import Resource, fields, inputs
+from flask_restplus import Resource, fields, inputs, Namespace
 from flask_restplus.reqparse import RequestParser
 
-from backend import api, pagination, db
+from backend import pagination, db
 from backend.common.schema import ProjectSchema
 from backend.models import Project, Team
 from backend.resources.users import user_schema
 
-project_schema = api.model('Project', {
+ns_project = Namespace('project', 'Project management')
+
+project_schema = ns_project.model('Project', {
     'id': fields.Integer(),
     'uuid': fields.String(),
     'user': fields.Nested(user_schema),
@@ -36,7 +38,7 @@ parser.add_argument('status', required=False, location='json', type=str)
 class ProjectResource(Resource):
     method_decorators = [jwt_required]
 
-    @api.marshal_with(project_schema, envelope='data')
+    @ns_project.marshal_with(project_schema, envelope='data')
     def get(self, pk):
         if current_user.role == 'CLIENT':
             return current_user.projects.filter_by(id=pk).first_or_404()
@@ -106,3 +108,7 @@ class ProjectResourceList(Resource):
         proj.project_team = collection
         current_user.projects.append(proj)
         return current_user.save(**args), 201
+
+
+ns_project.add_resource(ProjectResource, '/<int:pk>', endpoint='project')
+ns_project.add_resource(ProjectResourceList, '/', endpoint='projects')

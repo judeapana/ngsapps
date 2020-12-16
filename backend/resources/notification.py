@@ -1,14 +1,16 @@
 from flask import request
-from flask_restplus import Resource, fields, inputs
+from flask_restplus import Resource, fields, inputs, Namespace
 from flask_restplus.reqparse import RequestParser
 
-from backend import pagination, api, db
+from backend import pagination, db
 from backend.common.schema import NotificationSchema
 from backend.models import Notification
 from backend.resources.users import user_schema
 
+ns_notify = Namespace('notification','Notifications for application users')
+
 schema = NotificationSchema()
-notification_schema = api.model('Notification', {
+notification_schema = ns_notify.model('Notification', {
     'id': fields.Integer(),
     'user': fields.Nested(user_schema),
     'title': fields.String(),
@@ -28,7 +30,7 @@ parser.add_argument('schedule_at', required=False, location='json', type=inputs.
 
 
 class NotificationResource(Resource):
-    @api.marshal_with(notification_schema)
+    @ns_notify.marshal_with(notification_schema)
     def get(self, pk):
         return Notification.query.get_or_404(pk)
 
@@ -53,3 +55,7 @@ class NotificationResourceList(Resource):
         notification = Notification(**args)
         args.update({'schedule_at': str(args.schedule_at)})
         return notification.save(**args), 201
+
+
+ns_notify.add_resource(NotificationResource, '/<int:pk>', endpoint='notification')
+ns_notify.add_resource(NotificationResourceList, '/', endpoint='notifications')

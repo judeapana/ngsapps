@@ -1,16 +1,18 @@
 from flask import request
 from flask_jwt_extended import jwt_required, current_user
-from flask_restplus import Resource, fields, inputs
+from flask_restplus import Resource, fields, inputs, Namespace
 from flask_restplus.reqparse import RequestParser
 
-from backend import api, pagination, db
+from backend import pagination, db
 from backend.common.schema import TaskSchema
 from backend.models import Task
 from backend.resources.project import project_schema
 from backend.resources.users import user_schema
 
+ns_task = Namespace('task', 'Task for projects')
+
 schema = TaskSchema()
-task_schema = api.model('Task', {
+task_schema = ns_task.model('Task', {
     'id': fields.Integer(),
     'name': fields.String(),
     'user': fields.Nested(user_schema),
@@ -32,7 +34,7 @@ parser.add_argument('status', required=False, location='json', type=inputs.boole
 class TaskResource(Resource):
     method_decorators = [jwt_required]
 
-    @api.marshal_with(task_schema)
+    @ns_task.marshal_with(task_schema)
     def get(self, pk):
         return Task.query.get_or_404(pk)
 
@@ -63,3 +65,7 @@ class TaskResourceList(Resource):
         print(args.date)
         print(args.due_date)
         return task.save(**args), 201
+
+
+ns_task.add_resource(TaskResource, '/<int:pk>', endpoint='task')
+ns_task.add_resource(TaskResourceList, '/', endpoint='tasks')

@@ -5,9 +5,11 @@ from flask_restful.reqparse import RequestParser
 from flask_restplus import Resource
 
 from backend.models import User
+from backend.security import auth
 
 
-class ConfirmAccountResource(Resource):
+@auth.route('/confirm-account')
+class ConfirmAccount(Resource):
     def get(self):
         parser = RequestParser(bundle_errors=True, trim=True)
         parser.add_argument('token', type=str, required=True, location='args', help='Token is missing')

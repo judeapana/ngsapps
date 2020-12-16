@@ -1,5 +1,4 @@
 import random
-import uuid
 
 from flask import jsonify, url_for
 from flask_bcrypt import generate_password_hash
@@ -27,17 +26,15 @@ class RegisterResource(Resource):
 
         try:
             user = User()
-            user.uuid = str(uuid.uuid4())
             user.email = args.email_address
             user.username = f'{args.full_name.replace(" ", "").lower()}{random.randint(1, 9999)}'
             user.password = generate_password_hash(args.password).decode()
             user.role = 'CLIENT'
             token = user.create_token()
             user.save()
-            text = f"""
-            Your Account has been created.
+            text = f"""Your Account has been created.
             Confirm Your Account By Clicking on this link.
-            Link : <a href="{url_for('api.confirm_account', token=token, _external=True)}"></a>
+            Link : <a href="{url_for('api.auth_confirm_account', token=token, _external=True)}"></a>
             """
             send_mail_rq.queue(user.email, text, 'Register')
             return jsonify(

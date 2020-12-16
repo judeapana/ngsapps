@@ -1,10 +1,10 @@
 import werkzeug
 from flask import request
 from flask_jwt_extended import current_user, jwt_required
-from flask_restplus import Resource, fields, abort
+from flask_restplus import Resource, fields, abort, Namespace
 from flask_restplus.reqparse import RequestParser
 
-from backend import pagination, api, db
+from backend import pagination, db
 from backend.common import phone_number
 from backend.common.schema import KYCSchema
 from backend.models import Kyc
@@ -19,9 +19,10 @@ parser.add_argument('about_business', required=True, location='json', type=str)
 parser.add_argument('phone_number', required=True, location='json', type=phone_number)
 parser.add_argument('country', required=True, location='json', type=str)
 
+ns_kyc = Namespace('kyc', 'Know your customer')
 schema = KYCSchema()
 
-mschema = api.model('KYC', {
+mschema = ns_kyc.model('KYC', {
     'user': fields.Nested(user_schema),
     'business_name': fields.String(),
     'ident': fields.String(),
@@ -46,7 +47,7 @@ class KYCResourceList(Resource):
 class KYCResource(Resource):
     method_decorators = [jwt_required]
 
-    @api.marshal_with(mschema)
+    @ns_kyc.marshal_with(mschema)
     def get(self, pk):
         obj = Kyc.query.get_or_404(pk)
         return obj
@@ -73,7 +74,7 @@ class ClientKYCResource(Resource):
     method_decorators = [jwt_required]
     mschema.pop('user')
 
-    @api.marshal_with(mschema)
+    @ns_kyc.marshal_with(mschema)
     def get(self):
         return current_user.kyc_doc
 
@@ -105,7 +106,7 @@ class KycUploadResource(Resource):
     method_decorators = [jwt_required]
     file_parser = RequestParser(bundle_errors=True)
 
-    @api.marshal_with(mschema)
+    @ns_kyc.marshal_with(mschema)
     def post(self):
         # if current_user.kyc_doc.status == 'Approved':
         #     return {'message': 'You documents are approval'}
@@ -120,3 +121,9 @@ class KycUploadResource(Resource):
         kyc.file = file.get('filename')
         kyc.save()
         return kyc, 200
+
+
+ns_kyc.add_resource(KYCResourceList, '/', endpoint='kycs')
+ns_kyc.add_resource(KYCResource, '/<int:pk>', endpoint='kyc')
+ns_kyc.add_resource(ClientKYCResource, '/client', endpoint='client_kyc')
+ns_kyc.add_resource(KycUploadResource, '/client/file', endpoint='client_kyc_file')

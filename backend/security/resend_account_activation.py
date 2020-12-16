@@ -4,10 +4,12 @@ from flask_restplus import Resource
 from flask_restplus import inputs
 
 from backend.models import User
+from backend.security import auth
 from backend.tasks.mail import send_mail_rq
 
 
-class ResendAccountActivationResource(Resource):
+@auth.route('/resend-acc')
+class ResendAccountActivation(Resource):
     def post(self):
         parser = RequestParser(bundle_errors=True)
         parser.add_argument('email_address', type=inputs.email(), required=True, location='json')
@@ -18,6 +20,6 @@ class ResendAccountActivationResource(Resource):
         if user.status:
             return jsonify(message='Your dont have access to this function')
         token = user.create_token()
-        message = f"""Your account activation link <a href='{url_for('api.confirm', token=token, _external=True)}'> Click here</a>"""
+        message = f"""Your account activation link <a href='{url_for('api.auth_confirm_account', token=token, _external=True)}'> Click here</a>"""
         send_mail_rq.queue(user.email, message, 'Resend Account Activation')
         return jsonify(message='Account reset link has been sent')

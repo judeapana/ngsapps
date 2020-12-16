@@ -2,15 +2,16 @@ import secrets
 
 from flask import request
 from flask_jwt_extended import jwt_required
-from flask_restplus import Resource, fields, inputs
+from flask_restplus import Resource, fields, inputs, Namespace
 from flask_restplus.reqparse import RequestParser
 
-from backend import pagination, api, db
+from backend import pagination, db
 from backend.common import string
 from backend.common.schema import UserSchema
 from backend.models import User
 
-user_schema = api.model('User', {
+ns_user = Namespace('user', 'User management users/admin/client/team members')
+user_schema = ns_user.model('User', {
     'id': fields.Integer(),
     'username': fields.String(min_length=4, max_length=3),
     'email': fields.String(),
@@ -52,7 +53,7 @@ class UserResourceList(Resource):
 class UserResource(Resource):
     method_decorators = [jwt_required]
 
-    @api.marshal_with(user_schema, envelope='data')
+    @ns_user.marshal_with(user_schema, envelope='data')
     def get(self, pk):
         return User.query.get_or_404(pk)
 
@@ -75,3 +76,7 @@ class UserResource(Resource):
     def delete(self, pk):
         user = User.query.get_or_404(pk)
         return user.delete(), 202
+
+
+ns_user.add_resource(UserResourceList, '/users', endpoint='users')
+ns_user.add_resource(UserResource, '/user/<int:pk>', endpoint='user')
