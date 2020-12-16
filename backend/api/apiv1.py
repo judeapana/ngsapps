@@ -16,7 +16,7 @@ from backend.resources.users import ns_user
 from backend.security import auth
 
 bapi = Blueprint('api', __name__, url_prefix='/api')
-api = Api(bapi, title='Ngsapp', catch_all_404s=True, serve_challenge_on_401=True)
+api = Api(bapi, title='Ngsapp')
 
 api.add_namespace(auth)
 api.add_namespace(ns_kyc)

@@ -3,6 +3,7 @@ from flask_restful.reqparse import RequestParser
 from flask_restplus import Resource
 from flask_restplus import inputs
 
+from backend.common.constants import CONFIRM_ACC
 from backend.models import User
 from backend.security import auth
 from backend.tasks.mail import send_mail_rq
@@ -20,6 +21,6 @@ class ResendAccountActivation(Resource):
         if user.status:
             return jsonify(message='Your dont have access to this function')
         token = user.create_token()
-        message = f"""Your account activation link <a href='{url_for('api.auth_confirm_account', token=token, _external=True)}'> Click here</a>"""
-        send_mail_rq.queue(user.email, message, 'Resend Account Activation')
+        url = url_for('api.auth_confirm_account', token=token, _external=True)
+        send_mail_rq.queue(CONFIRM_ACC.format(url=url, name=user.full_name), [user.email], 'Resend Account Activation')
         return jsonify(message='Account reset link has been sent')

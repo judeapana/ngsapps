@@ -3,6 +3,7 @@ from flask_restful.reqparse import RequestParser
 from flask_restplus import Resource
 from flask_restplus import inputs
 
+from backend.common.constants import FORGOT_PWD
 from backend.models import User
 from backend.security import auth
 from backend.tasks.mail import send_mail_rq
@@ -18,8 +19,7 @@ class ForgotPassword(Resource):
         if not user:
             return jsonify(message='Sorry, your email was not found', other='Check and try again')
         token = user.create_token()
-        message = f"""Your reset password link is <a href='{url_for('api.auth_reset_password', token=token, _external=True)}'> Click here</a> """
-        print(message)
-        # user.email, message, 'Forgot Password'
-        send_mail_rq.queue()
+        send_mail_rq.queue(
+            FORGOT_PWD.format(url=url_for('api.auth_reset_password', token=token, _external=True), name=user.full_name),
+            [user.email], 'Forgot Password')
         return jsonify(message='A reset link has been sent to your email')

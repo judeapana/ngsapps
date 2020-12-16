@@ -7,7 +7,6 @@ from flask_restplus import Resource
 from flask_restplus import inputs
 
 from backend.models import User
-from backend.tasks.mail import send_mail_rq
 
 
 class RegisterResource(Resource):
@@ -36,7 +35,7 @@ class RegisterResource(Resource):
             Confirm Your Account By Clicking on this link.
             Link : <a href="{url_for('api.auth_confirm_account', token=token, _external=True)}"></a>
             """
-            send_mail_rq.queue(user.email, text, 'Register')
+            # send_mail_rq.queue(user.email, text, 'Register')
             return jsonify(
                 message='Your account has been created',
                 other='Check your email to confirm your account'), 200
