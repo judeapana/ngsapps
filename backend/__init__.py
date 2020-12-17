@@ -3,7 +3,7 @@ from uuid import UUID
 from flask import Flask
 
 from backend.config import DevelopmentConfig
-from backend.ext import cors, db, pagination, bcrypt, migrate, rq, ma, mail, jwt
+from backend.ext import cors, db, pagination, bcrypt, migrate, rq, ma, mail, jwt, redis
 from backend.models import User
 
 
@@ -20,10 +20,22 @@ def create_app():
     ma.init_app(app)
     mail.init_app(app)
     app.register_blueprint(bapi)
+    redis.init_app(app)
 
     @jwt.user_loader_callback_loader
     def load_user(identity):
         return User.query.filter(User.uuid == UUID(identity)).one()
+
+    @jwt.token_in_blacklist_loader
+    def blacklist(decrypted_token):
+        jti = decrypted_token['jti']
+        entry = redis.get(jti)
+        try:
+            if entry is None:
+                return True
+            return entry.decode() == 'true'
+        except:
+            return True
 
     # with app.app_context():
     #     urlvars = False  # Build query strings in URLs

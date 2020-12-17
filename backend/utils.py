@@ -1,8 +1,10 @@
 import os
 import secrets
+from functools import wraps
 
 from PIL import Image
 from flask import current_app
+from flask_jwt_extended import current_user
 from werkzeug.utils import secure_filename
 
 
@@ -42,3 +44,16 @@ def file_upload(file_storage, base_dir='protected', allowed=None):
     path = os.path.join(current_app.root_path, 'static', f'{base_dir}/{cur_file_name}')
     ret = {'filename': cur_file_name, 'upload': file_storage, 'full_path': path}
     return ret
+
+
+def roles_required(roles):
+    def wrapper(func):
+        @wraps(func)
+        def decorate(*args, **kwargs):
+            if not (current_user.role in roles):
+                return {"message": "Unauthorized"}, 401
+            return func(*args, **kwargs)
+
+        return decorate
+
+    return wrapper
