@@ -34,7 +34,7 @@ def delete_file(filename, base_dir='protected'):
 
 def file_upload(file_storage, base_dir='protected', allowed=None):
     if allowed is None:
-        allowed = ['pdf', 'docx', 'doc', 'zip']
+        allowed = ['pdf', 'docx', 'doc', 'zip', 'png', 'jpg', 'jpeg', 'gif']
     filename = secure_filename(file_storage.filename)
     ext = filename.split('.')
     if not (ext[-1] in allowed):

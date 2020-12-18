@@ -1,15 +1,15 @@
 import werkzeug
 from flask import request
 from flask_jwt_extended import jwt_required, current_user
-from flask_restplus import fields, Resource, Namespace
+from flask_restplus import fields, Resource, Namespace, marshal
 from flask_restplus.reqparse import RequestParser
 
-from backend.ext import db, pagination
 from backend.common import ProtectedDirField
-from backend.common.schema import TicketCommentSchema
+from backend.common.schema import TicketCommentSchema, TicketSchema
+from backend.ext import db, pagination
 from backend.models import TicketComment, Ticket
 from backend.resources.users import user_schema
-from backend.utils import file_upload, delete_file
+from backend.utils import file_upload, delete_file, roles_required
 
 ns_ticket_comments = Namespace('ticket-comment', 'support tickets clients')
 
@@ -27,19 +27,20 @@ schema = TicketCommentSchema()
 
 
 class TicketCommentResource(Resource):
-    method_decorators = [jwt_required]
+    method_decorators = [roles_required(['ADMIN', 'USER', 'CLIENT']), jwt_required]
 
-    @ns_ticket_comments.marshal_with(ticket_comment_schema)
     def get(self, uuid, pk):
-        return TicketComment.query.filter(TicketComment.id == pk,
-                                          TicketComment.ticket.has(uuid=uuid)).first_or_404()
+        return schema.dump(TicketComment.query.filter(TicketComment.id == pk,
+                                                      TicketComment.ticket.has(uuid=uuid)).first_or_404())
 
     def put(self, uuid, pk):
-        args = parser.parse_args(strict=True)
+        parser.parse_args(strict=True)
+        request.json.update({'ticket_id': Ticket.query.filter_by(uuid=uuid).first_or_404().id})
         comment = TicketComment.query.filter(TicketComment.id == pk,
                                              TicketComment.ticket.has(uuid=uuid)).first_or_404()
         obj = schema.load(data=request.json, session=db.session, unknown='exclude', instance=comment)
-        return obj.save(**args)
+        obj.save()
+        return schema.dump(obj)
 
     def delete(self, uuid, pk):
         comment = TicketComment.query.filter(TicketComment.ticket.has(uuid=uuid), TicketComment.id == pk,
@@ -51,7 +52,7 @@ class TicketCommentResource(Resource):
 
 
 class TicketCommentResourceList(Resource):
-    method_decorators = [jwt_required]
+    method_decorators = [roles_required(['ADMIN', 'USER', 'CLIENT']), jwt_required]
 
     def get(self, uuid):
         return pagination.paginate(TicketComment.query.filter(TicketComment.ticket.has(uuid=uuid)), schema, True)
@@ -61,7 +62,8 @@ class TicketCommentResourceList(Resource):
         ticket = Ticket.query.filter_by(uuid=uuid).first_or_404()
         args.update({'user_id': current_user.id})
         ticket.comments.append(TicketComment(**args, ))
-        return current_user.save(**args), 201
+        ticket.save(**args), 201
+        return TicketSchema().dump(ticket)
 
 
 xparser = RequestParser(trim=True, bundle_errors=True)
@@ -69,7 +71,7 @@ xparser.add_argument('file', required=True, location='files', type=werkzeug.data
 
 
 class TicketCommentResourceFile(Resource):
-    method_decorators = [jwt_required]
+    method_decorators = [roles_required(['ADMIN', 'USER', 'CLIENT']), jwt_required]
 
     def post(self, uuid, pk):
         comment = TicketComment.query.filter(TicketComment.ticket.has(uuid=uuid),
@@ -82,13 +84,17 @@ class TicketCommentResourceFile(Resource):
         data.get('upload').save(data.get('full_path'))
         delete_file(comment.file)
         comment.file = data.get('filename')
-        return comment.save(filename=comment.file, id=comment.id), 201
+        comment.save()
+        return marshal(comment, ticket_comment_schema), 201
 
     def delete(self, uuid, pk):
         comment = TicketComment.query.filter(TicketComment.ticket.has(uuid=uuid),
                                              TicketComment.id == pk,
                                              TicketComment.user_id == current_user.id).first_or_404()
-        return delete_file(comment.file)
+        data = delete_file(comment.file)
+        if data.get('message'):
+            return data, 400
+        return data
 
 
 ns_ticket_comments.add_resource(TicketCommentResource, '/comment/<uuid>/<pk>', endpoint='ticket_comment')

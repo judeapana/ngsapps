@@ -47,9 +47,13 @@ class User(db.Model, ActiveRecord, Timestamp):
     def set_password(self, password):
         self.password = bcrypt.generate_password_hash(password)
 
-    def create_token(self, expires=172800):
+    def create_token(self, payload=None, expires=172800):
+        if payload is None:
+            payload = {}
         jst = TimedJSONWebSignatureSerializer(secret_key=current_app.secret_key, expires_in=expires)
-        return jst.dumps({'id': str(self.uuid)}).decode()
+        data = {'id': str(self.uuid)}
+        data.update(payload)
+        return jst.dumps(data).decode()
 
     @staticmethod
     def authenticate_token(token):
@@ -79,6 +83,7 @@ class Kyc(db.Model, ActiveRecord, Timestamp):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='cascade'), nullable=False)
     business_name = db.Column(db.String(100), nullable=False, unique=True)
     ident = db.Column(db.String(100), nullable=False, unique=True)
+    ident_name = db.Column(db.String(100), nullable=False, )
     about_business = db.Column(db.Text, nullable=False, unique=True)
     phone_number = db.Column(PhoneNumberType(region='GH'), nullable=False, unique=True)
     country = db.Column(db.String(100), nullable=False)
@@ -175,7 +180,7 @@ class Ticket(db.Model, ActiveRecord):
     uuid = db.Column(UUIDType, default=uuid4(), nullable=False)
     title = db.Column(db.String(100), nullable=False)
     project_id = db.Column(db.Integer, db.ForeignKey('project.id', ondelete='cascade'), nullable=False)
-    status = db.Column(db.Enum('Achieve', 'Open', 'Closed'))
+    status = db.Column(db.Enum('Achieve', 'Open', 'Closed'), default='Open')
     comments = db.relationship('TicketComment', backref=db.backref('ticket'), cascade='all,delete,delete-orphan',
                                lazy='dynamic')
 

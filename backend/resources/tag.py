@@ -3,9 +3,10 @@ from flask_jwt_extended import jwt_required
 from flask_restplus import Resource, fields, Namespace
 from flask_restplus.reqparse import RequestParser
 
-from backend.ext import pagination, db
 from backend.common.schema import TagSchema
+from backend.ext import pagination, db
 from backend.models import Tag, User
+from backend.utils import roles_required
 
 ns_tag = Namespace('tag', 'tags for yours')
 
@@ -20,7 +21,7 @@ tag_schema = ns_tag.model('TagSchema', {
 
 
 class TagResource(Resource):
-    method_decorators = [jwt_required]
+    method_decorators = [roles_required(['ADMIN']), jwt_required]
 
     @ns_tag.marshal_with(tag_schema, envelope='data')
     def get(self, pk):
@@ -40,7 +41,7 @@ class TagResource(Resource):
 
 
 class TagResourceList(Resource):
-    method_decorators = [jwt_required]
+    method_decorators = [roles_required(['ADMIN']), jwt_required]
 
     def get(self):
         return pagination.paginate(Tag, schema, True)
@@ -54,7 +55,7 @@ class TagResourceList(Resource):
 
 
 class UserTagResource(Resource):
-    method_decorators = [jwt_required]
+    method_decorators = [roles_required(['ADMIN']), jwt_required]
 
     def put(self):
         par = RequestParser(trim=True, bundle_errors=True)

@@ -15,6 +15,7 @@ parser = RequestParser(bundle_errors=True, trim=True)
 
 parser.add_argument('business_name', required=True, location='json', type=str)
 parser.add_argument('ident', required=True, location='json', type=str)
+parser.add_argument('ident_name', required=True, location='json', type=str)
 parser.add_argument('about_business', required=True, location='json', type=str)
 parser.add_argument('phone_number', required=True, location='json', type=phone_number)
 parser.add_argument('country', required=True, location='json', type=str)
@@ -26,11 +27,13 @@ mschema = ns_kyc.model('KYC', {
     'user': fields.Nested(user_schema),
     'business_name': fields.String(),
     'ident': fields.String(),
+    'ident_name': fields.String(),
     'about_business': fields.String(),
     'phone_number': fields.String(),
     'country': fields.String(),
     'file': fields.String(),
     'status': fields.String(),
+    'created': fields.DateTime(),
 })
 
 
@@ -106,7 +109,7 @@ class KycUploadResource(Resource):
     def post(self):
         doc = current_user.kyc_doc.status if current_user.kyc_doc else abort(404)
         if doc != 'Pending':
-            return {'message': 'You cant update kyc when not in pending state'},400
+            return {'message': 'You cant update kyc when not in pending state'}, 400
         KycUploadResource.file_parser.add_argument('file', required=True, location='files',
                                                    type=werkzeug.datastructures.FileStorage)
         args = KycUploadResource.file_parser.parse_args(strict=True)

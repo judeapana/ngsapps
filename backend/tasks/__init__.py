@@ -1,5 +1,5 @@
 from backend.ext import rq
-from backend.models import Kyc, Notification
+from backend.models import Kyc, Notification, User
 
 
 @rq.job
@@ -15,3 +15,22 @@ def check_kyc_file():
         notify = Notification(user_id=kyc.user_id, title="Upload KYC Files", message=message, status=True,
                               priority='High')
         notify.save()
+
+
+@rq.job
+def rq_notify(message='Application Notification', title='Blank Notification'):
+    users = User.query.filter(User.role == 'ADMIN').all()
+    for user in users:
+        user.notifications.append(Notification(title=title, message=message, status=True,
+                                               priority='High'))
+        user.save()
+
+
+@rq.job
+def rq_notify_team(users=None, title='', message=''):
+    if users is None:
+        return
+    for user in users:
+        user.notifications.append(Notification(title=title, message=message, status=True,
+                                               priority='High'))
+        user.save()

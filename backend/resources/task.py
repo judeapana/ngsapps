@@ -3,11 +3,12 @@ from flask_jwt_extended import jwt_required, current_user
 from flask_restplus import Resource, fields, inputs, Namespace
 from flask_restplus.reqparse import RequestParser
 
-from backend.ext import pagination, db
 from backend.common.schema import TaskSchema
+from backend.ext import pagination, db
 from backend.models import Task
 from backend.resources.project import project_schema
 from backend.resources.users import user_schema
+from backend.utils import roles_required
 
 ns_task = Namespace('task', 'Task for projects')
 
@@ -25,26 +26,25 @@ task_schema = ns_task.model('Task', {
 parser = RequestParser(trim=True, bundle_errors=True)
 parser.add_argument('name', required=True, location='json', type=str)
 parser.add_argument('project_id', required=True, location='json', type=int)
+parser.add_argument('user_id', required=True, location='json', type=int)
 parser.add_argument('description', required=True, location='json', type=str)
 parser.add_argument('date', required=True, location='json', type=inputs.datetime_from_iso8601)
 parser.add_argument('due_date', required=True, location='json', type=inputs.datetime_from_iso8601)
-parser.add_argument('status', required=False, location='json', type=inputs.boolean)
+parser.add_argument('status', required=False, location='json', type=str)
 
 
 class TaskResource(Resource):
-    method_decorators = [jwt_required]
+    method_decorators = [roles_required(['ADMIN', 'TEAM_MEMBER']), jwt_required]
 
-    @ns_task.marshal_with(task_schema)
     def get(self, pk):
-        return Task.query.get_or_404(pk)
+        return schema.dump(Task.query.get_or_404(pk))
 
     def put(self, pk):
-        args = parser.parse_args(strict=True)
+        parser.parse_args(strict=True)
         task = Task.query.get_or_404(pk)
         obj = schema.load(data=request.json, instance=task, session=db.session, unknown='exclude')
-        args.update({'date': str(args.date)})
-        args.update({'due_date': str(args.due_date)})
-        return obj.save(**args), 201
+        obj.save()
+        return schema.dump(obj)
 
     def delete(self, pk):
         task = Task.query.get_or_404(pk)
@@ -52,19 +52,16 @@ class TaskResource(Resource):
 
 
 class TaskResourceList(Resource):
-    method_decorators = [jwt_required]
+    method_decorators = [roles_required(['ADMIN', 'TEAM_MEMBER']), jwt_required]
 
     def get(self):
-        return pagination.paginate(Task, task_schema)
+        return pagination.paginate(Task, schema, True)
 
     def post(self):
         args = parser.parse_args(strict=True)
-        task = Task(**args, user=current_user)
-        args.update({'date': str(args.date)})
-        args.update({'due_date': str(args.due_date)})
-        print(args.date)
-        print(args.due_date)
-        return task.save(**args), 201
+        task = Task(**args)
+        task.save()
+        return schema.dump(task), 201
 
 
 ns_task.add_resource(TaskResource, '/<int:pk>', endpoint='task')

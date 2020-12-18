@@ -47,6 +47,7 @@ class ProjectSchema(ma.SQLAlchemyAutoSchema):
         include_fk = True
 
     user = fields.Nested(UserSchema())
+    project_team = fields.Nested(TeamSchema(), many=True)
 
 
 class ProjectFileSchema(ma.SQLAlchemyAutoSchema):

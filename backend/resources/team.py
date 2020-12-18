@@ -3,21 +3,23 @@ from flask_jwt_extended import jwt_required
 from flask_restplus import Resource, fields, inputs, Namespace
 from flask_restplus.reqparse import RequestParser
 
-from backend.ext import pagination, db
 from backend.common import string
 from backend.common.schema import TeamSchema
+from backend.ext import pagination, db
 from backend.models import Team, User, TeamMember
 from backend.resources.users import user_schema
+from backend.utils import roles_required
 
 ns_team = Namespace('team', 'Build teams to handle projects')
 
 schema = TeamSchema()
-mschema = ns_team.model('Team', {
+team_schema = ns_team.model('Team', {
     'id': fields.Integer(),
     'name': fields.String(),
     'email_address': fields.String(),
     'description': fields.String(),
     'users': fields.Nested(user_schema),
+    'created': fields.DateTime(),
 })
 
 parser = RequestParser(trim=True, bundle_errors=True)
@@ -28,9 +30,9 @@ parser.add_argument('description', required=True, location='json', type=string, 
 
 
 class TeamResource(Resource):
-    method_decorators = [jwt_required]
+    method_decorators = [roles_required(['ADMIN']), jwt_required]
 
-    @ns_team.marshal_with(mschema, envelope='data')
+    @ns_team.marshal_with(team_schema, envelope='data')
     def get(self, pk):
         return Team.query.get(pk)
 
@@ -54,12 +56,12 @@ class TeamResource(Resource):
         return obj.save(**args)
 
     def delete(self, pk):
-        team = Team.query.get(pk)
+        team = Team.query.get_or_404(pk)
         return team.delete(), 202
 
 
 class TeamResourceList(Resource):
-    method_decorators = [jwt_required]
+    method_decorators = [roles_required(['ADMIN']), jwt_required]
 
     def get(self):
         return pagination.paginate(Team, schema, True)

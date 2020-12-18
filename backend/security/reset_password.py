@@ -1,6 +1,5 @@
 from uuid import UUID
 
-from flask import jsonify
 from flask_bcrypt import generate_password_hash
 from flask_restful.reqparse import RequestParser
 from flask_restplus import Resource
@@ -21,8 +20,8 @@ class ResetPassword(Resource):
         args = ResetPassword.parser.parse_args(strict=True)
         token = User.authenticate_token(args.token)
         if not token:
-            return jsonify(message='Token is invalid or has expired', other='Please regenerate token')
-        return jsonify(message='Token is valid')
+            return {'message': 'Token is invalid or has expired', "other": 'Please regenerate token'}
+        return {'message': 'Token is valid'}
 
     def put(self):
         ResetPassword.parser.add_argument('token', type=str, required=True, location='args',
@@ -36,15 +35,14 @@ class ResetPassword(Resource):
         args = ResetPassword.parser.parse_args(strict=True)
 
         token = User.authenticate_token(args.token)
-        print(token)
         if not token:
-            return jsonify(message='Token is invalid or has expired', other='Please regenerate token')
+            return {'message': 'Token is invalid or has expired', "other": 'Please regenerate token'}
         try:
             if not safe_str_cmp(args.confirm_pwd, args.new_pwd):
-                return jsonify(message='passwords dont match')
+                return {"message": 'passwords dont match'}
             user = User.query.filter(User.uuid == UUID(token.get('id'))).first()
             user.password = generate_password_hash(args.new_pwd).decode()
             user.save()
-            return jsonify(message='Your password has been updated successfully')
+            return {'message': 'Your password has been updated successfully'}
         except Exception:
-            return jsonify(message='Something went wrong', other='unable to update password')
+            return {'message': 'Something went wrong', 'other': 'unable to update password'}

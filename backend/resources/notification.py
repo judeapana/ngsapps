@@ -20,7 +20,8 @@ notification_schema = ns_notify.model('Notification', {
     'status': fields.Boolean(),
     'read': fields.Boolean(),
     'priority': fields.String(),
-    'schedule_at': fields.DateTime()
+    'schedule_at': fields.DateTime(),
+    'created': fields.DateTime()
 })
 
 parser = RequestParser(trim=True, bundle_errors=True)

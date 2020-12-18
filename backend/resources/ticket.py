@@ -1,12 +1,14 @@
 from flask import request
+from flask_jwt_extended import current_user, jwt_required
 from flask_restplus import Resource, fields, Namespace
 from flask_restplus.reqparse import RequestParser
 
-from backend.ext import pagination, db
 from backend.common.schema import TicketSchema
+from backend.ext import pagination, db
 from backend.models import Ticket
 from backend.resources.project import project_schema
 from backend.resources.ticket_comment import ticket_comment_schema
+from backend.utils import roles_required
 
 ns_ticket = Namespace('ticket', 'Support tickets for clients')
 schema = TicketSchema()
@@ -25,14 +27,20 @@ parser.add_argument('status', required=False, location='json', type=str)
 
 
 class TicketResource(Resource):
+    method_decorators = [roles_required(['ADMIN', 'USER', 'CLIENT']), jwt_required]
+
     def get(self, pk):
-        return Ticket.query.get_or_404(pk)
+        if current_user.role == 'CLIENT':
+            return schema.dump(
+                Ticket.query.filter(Ticket.project.has(user_id=current_user.id), Ticket.id == pk).first_or_404())
+        return schema.dump(Ticket.query.get_or_404(pk))
 
     def put(self, pk):
-        args = parser.parse_args(strict=True)
+        parser.parse_args(strict=True)
         ticket = Ticket.query.get_or_404(pk)
         obj = schema.load(data=request.json, session=db.session, unknown='exclude', instance=ticket)
-        return obj.save(**args)
+        obj.save()
+        return schema.dump(obj)
 
     def delete(self, pk):
         ticket = Ticket.query.get_or_404(pk)
@@ -40,13 +48,19 @@ class TicketResource(Resource):
 
 
 class TicketResourceList(Resource):
+    method_decorators = [roles_required(['ADMIN', 'USER', 'CLIENT']), jwt_required]
+
     def get(self):
+        if current_user.role == 'CLIENT':
+            return pagination.paginate(Ticket.query.filter(Ticket.project.has(user_id=current_user.id)), schema, True)
         return pagination.paginate(Ticket, schema, True)
 
     def post(self):
-        args = parser.parse_args(strict=True)
-        ticket = Ticket(**args)
-        return ticket.save(**args), 201
+        parser.parse_args(strict=True)
+        ticket = Ticket()
+        obj = schema.load(data=request.json, instance=ticket, session=db.session, unknown='exclude')
+        obj.save()
+        return schema.dump(obj), 201
 
 
 ns_ticket.add_resource(TicketResource, '/<int:pk>', endpoint='ticket')
